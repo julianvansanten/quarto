@@ -48,10 +48,10 @@ impl PrintableBoard {
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct Piece {
     // This order is coherent with the order of the networking protocol.
-    hole: bool,   // fill
-    square: bool, // shape
-    high: bool,   // size
-    dark: bool,   // color
+    pub hole: bool,   // fill
+    pub square: bool, // shape
+    pub high: bool,   // size
+    pub dark: bool,   // color
 }
 
 impl Piece {
