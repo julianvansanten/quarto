@@ -29,21 +29,23 @@ impl PrintableBoard {
         }
         PrintableBoard { items }
     }
-
-    /// Create a `Board` from this `PrintableBoard`.
-    pub fn to_board(&self) -> Result<Board, &'static str> {
-        if self.items.len() != 16 {
-            return Err("The PrintableBoard does not contain 16 elements!");
+    
+    /// Create a deep copy of the items in the board.
+    pub fn items(&self) -> Vec<Option<Piece>> {
+        let mut res: Vec<Option<Piece>> = Vec::new();
+        for option in self.items.iter() {
+            res.push(match option {
+                Some(p) => Some(p.clone()),
+                None => None,
+            });
         }
-        let items: u128 = 0;
-        todo!("Actually base the resulting board on self");
-        Ok(Board::new())
+        res
     }
 }
 
 /// A Piece on the board that can be printed, but is not necessarily used in the Board structure (slow).
 /// There are 16 Pieces in Quarto, with each piece having a hole/no hole, being square/round, being high/low, and dark/light.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct Piece {
     // This order is coherent with the order of the networking protocol.
     hole: bool,   // fill
@@ -156,12 +158,12 @@ mod tests {
             None => panic!("PrintableBoard not correctly initialized!"),
         };
         
-        let board: Board = match pboard.to_board() {
+        let board: Board = match Board::from_printable(&pboard) {
             Ok(b) => b,
             Err(_) => panic!("Board conversion failed!"),
         };
         
-        match PrintableBoard::from_board(board).to_board() {
+        match Board::from_printable(&PrintableBoard::from_board(board)) {
             Ok(board2) => assert_eq!(board, board2),
             Err(_) => panic!("Double conversion failed!"),
         };
