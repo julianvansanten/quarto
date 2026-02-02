@@ -86,7 +86,7 @@ impl Piece {
 
     /// Convert the `Piece` to a number between 0 and (incl.) 15.
     /// This number can be used to place a piece on the board.
-    pub fn to_u8(&self) -> u8 {
+    pub fn to_number(&self) -> u8 {
         let mut res: u8 = 0;
         res += (self.hole as u8) << 3;
         res += (self.square as u8) << 2;
@@ -138,12 +138,12 @@ mod tests {
     }
 
     #[test]
-    fn test_pp_to_u8() {
+    fn test_pp_to_number() {
         let piece = match Piece::from_u8(1) {
             Some(piece) => piece,
             None => panic!("This is not supposed to happen, check Piece::from_u8()!"),
         };
-        assert_eq!(piece.to_u8(), 0)
+        assert_eq!(piece.to_number(), 0)
     }
 
     #[test]

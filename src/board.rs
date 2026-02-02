@@ -38,25 +38,22 @@ impl Board {
         Board { items: 0 }
     }
 
-    /// Create a `Board` from a number.
-    /// This method does not validate the correctness of the board!
-    fn from_u128(items: u128) -> Self {
-        Board { items }
-    }
-
     /// Create a `Board` from a `PrintableBoard`.
     pub fn from_printable(pboard: &PrintableBoard) -> Result<Self, &'static str> {
         let pboard_items = pboard.items();
         if pboard_items.len() != 16 {
             return Err("The PrintableBoard does not contain 16 elements!");
         }
+
         let mut board: Board = Board::new();
         for (i, option) in pboard_items.iter().enumerate() {
             match option {
                 // Safely place the items on the board, return an `Err` if there is a duplicate.
-                Some(piece) => if !board.put_piece(piece.to_u8(), i as u8) {
-                    // TODO: add formatted string that tells why it failed.
-                    return Err("Unable to put item on board! Perhaps it already exists?");
+                Some(piece) => {
+                    if !board.put_piece(piece.to_number(), i as u8) {
+                        // TODO: add formatted string that tells why it failed.
+                        return Err("Unable to put item on board! Perhaps it already exists?");
+                    }
                 }
                 None => continue,
             };
@@ -256,7 +253,7 @@ mod tests {
 
     #[test]
     fn test_is_empty_non_empty_board() {
-        let board: Board = Board::from_u128(1);
+        let board: Board = Board { items: 1 };
         assert!(!board.is_empty(15));
         for x in 0..15 {
             assert!(board.is_empty(x));
@@ -265,9 +262,9 @@ mod tests {
 
     #[test]
     fn test_row_first() {
-        let num: u128 =
+        let items: u128 =
             (1 << (127 - 31)) + (1 << (127 - 23)) + (1 << (127 - 15)) + (1 << (127 - 7));
-        let board = Board::from_u128(num);
+        let board = Board { items };
         assert!(board.row(0));
         for row in 1..4 {
             assert!(!board.row(row))
@@ -276,9 +273,9 @@ mod tests {
 
     #[test]
     fn test_column_first() {
-        let num: u128 =
+        let items: u128 =
             (1 << (127 - 7)) + (1 << (127 - 39)) + (1 << (127 - 71)) + (1 << (127 - 103));
-        let board = Board::from_u128(num);
+        let board = Board { items };
         assert!(board.column(0));
         for column in 1..4 {
             assert!(!board.column(column))
@@ -647,7 +644,7 @@ mod tests {
         for i in 0..16 {
             items += 1 << (i * PIECE_SIZE);
         }
-        let board: Board = Board::from_u128(items);
+        let board: Board = Board { items };
         assert!(board.board_full());
     }
 
@@ -658,7 +655,7 @@ mod tests {
         for i in 0..10 {
             items += 1 << (i * PIECE_SIZE);
         }
-        let board: Board = Board::from_u128(items);
+        let board: Board = Board { items };
         assert!(!board.board_full());
     }
 
