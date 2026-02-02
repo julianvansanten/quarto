@@ -1,7 +1,10 @@
+// Author: @julianvansanten
+// A bitboard to store the Quarto board.
+
 use crate::printable::PrintableBoard;
 
 /// The bit size of a single piece.
-const PIECE_SIZE: u8 = 8;
+pub const PIECE_SIZE: u8 = 8;
 /// The bits set to check existence in the right-most column.
 /// Left-shift `COLUMN` by PIECE per column.
 const COLUMN: u128 =
@@ -9,6 +12,9 @@ const COLUMN: u128 =
 /// The bits set to check existence in the lowest row.
 /// Left-shift `ROW` by 4 * PIECE per row.
 const ROW: u128 = 0b1 + (0b1 << PIECE_SIZE) + (0b1 << 2 * PIECE_SIZE) + (0b1 << 3 * PIECE_SIZE);
+/// The bits set to check existence on the whole board.
+const BOARD_MASK: u128 =
+    COLUMN + (COLUMN << PIECE_SIZE) + (COLUMN << PIECE_SIZE * 2) + (COLUMN << PIECE_SIZE * 3);
 /// The bits set to check existence in the down diagonal.
 const DIAG_DOWN: u128 =
     0b1 + (0b1 << 5 * PIECE_SIZE) + (0b1 << 10 * PIECE_SIZE) + (0b1 << 15 * PIECE_SIZE);
@@ -34,7 +40,7 @@ impl Board {
 
     /// Create a `Board` from a number.
     /// This method does not validate the correctness of the board!
-    pub fn from_u128(items: u128) -> Self {
+    fn from_u128(items: u128) -> Self {
         Board { items }
     }
 
@@ -90,7 +96,7 @@ impl Board {
 
     /// Check if a row on the board is full and has blocks with one common characteristic.
     /// The `row` value must lie between 0 and (incl.) 3.
-    pub fn full_row(&self, row: u8) -> bool {
+    pub fn winning_row(&self, row: u8) -> bool {
         if !self.row(row) {
             return false;
         }
@@ -105,7 +111,7 @@ impl Board {
 
     /// Check if a column on the board is full and has blocks with one common characteristic.
     /// The `column` value must lie between 0 and (incl.) 3.
-    pub fn full_column(&self, column: u8) -> bool {
+    pub fn winning_column(&self, column: u8) -> bool {
         if !self.column(column) {
             return false;
         }
@@ -119,7 +125,7 @@ impl Board {
     }
 
     /// Check if a diagonal on the board is full and has blocks with one common characteristic.
-    pub fn full_diagonal(&self) -> bool {
+    pub fn winning_diagonal(&self) -> bool {
         for t in 4..8 {
             let diag_up_mask = DIAG_UP << t;
             let diag_down_mask = DIAG_DOWN << t;
@@ -136,11 +142,37 @@ impl Board {
         false
     }
 
+    /// Check if the board has a winner.
+    /// Return true if there is a row/column/diagonal that is full with winning pieces.
+    pub fn has_winner(&self) -> bool {
+        // Check all rows and columns first
+        for i in 0..4 {
+            if self.winning_row(i) || self.winning_column(i) {
+                return true;
+            }
+        }
+        // Finally, assume the result depends on the diagonals
+        self.winning_diagonal()
+    }
+
+    /// Check if the board is full with pieces.
+    /// The board is full if all existence bits are set on the entire board.
+    pub fn board_full(&self) -> bool {
+        // Build a bit mask from the COLUMN
+        self.items & BOARD_MASK == BOARD_MASK
+    }
+
+    /// Check if the game is over.
+    /// The game is over when there is a winning combination, or when the board is full.
+    pub fn game_over(&self) -> bool {
+        self.has_winner() || self.board_full()
+    }
+
     /// Put a piece (given as a number from 0 to (incl.) 15) on the board at a given index.
     /// Returns true if the piece was placed, false otherwise.
     pub fn put_piece(&mut self, piece: u8, index: u8) -> bool {
         // Cannot put a nonexisting piece on the board, or with an invalid index.
-        if piece > 15 || index > 15 {
+        if index > 15 || !self.valid_piece(piece) {
             return false;
         }
         let bit_index = 15 - index;
@@ -152,6 +184,22 @@ impl Board {
         // Finally, add it to the board.
         self.items +=
             (1 << (PIECE_SIZE * bit_index)) + ((piece as u128) << (PIECE_SIZE * bit_index) + 4);
+        true
+    }
+    
+    /// Check if a piece is valid to place on the board.
+    /// Loop over the pieces, if a piece exists, check if the values align with that of the piece number.
+    pub fn valid_piece(&self, piece: u8) -> bool {
+        // Pieces larger than 15 do not exist.
+        if piece > 15 {
+            return false
+        }
+        for p in 0..16 {
+            let piece_mask = (piece as u128) << (PIECE_SIZE * p + 4);
+            if self.items & (1 << PIECE_SIZE * p) != 0 && self.items & piece_mask == piece_mask {
+                return false
+            }
+        }
         true
     }
 }
@@ -234,23 +282,23 @@ mod tests {
     }
 
     #[test]
-    fn test_full_row_empty_board() {
+    fn test_winning_row_empty_board() {
         let board: Board = Board::new();
         for x in 0..4 {
-            assert!(!board.full_row(x))
+            assert!(!board.winning_row(x))
         }
     }
 
     #[test]
-    fn test_full_column_empty_board() {
+    fn test_winning_column_empty_board() {
         let board: Board = Board::new();
         for x in 0..4 {
-            assert!(!board.full_column(x))
+            assert!(!board.winning_column(x))
         }
     }
 
     #[test]
-    fn test_full_row_winning_row() {
+    fn test_winning_row_winning_row() {
         let mut pboard_items: Vec<Option<Piece>> = Vec::new();
         pboard_items.push(Some(Piece {
             hole: true,
@@ -287,14 +335,14 @@ mod tests {
             Ok(b) => b,
             Err(e) => panic!("Failed to construct board! {}", e),
         };
-        assert!(board.full_row(0));
+        assert!(board.winning_row(0));
         for i in 1..4 {
-            assert!(!board.full_row(i));
+            assert!(!board.winning_row(i));
         }
     }
 
     #[test]
-    fn test_full_row_non_winning_row() {
+    fn test_winning_row_non_winning_row() {
         let mut pboard_items: Vec<Option<Piece>> = Vec::new();
         pboard_items.push(Some(Piece {
             hole: true,
@@ -332,12 +380,12 @@ mod tests {
             Err(e) => panic!("Failed to construct board! {}", e),
         };
         for i in 0..4 {
-            assert!(!board.full_row(i));
+            assert!(!board.winning_row(i));
         }
     }
 
     #[test]
-    fn test_full_column_winning_column() {
+    fn test_winning_column_winning_column() {
         let mut pboard_items: Vec<Option<Piece>> = Vec::new();
         pboard_items.push(Some(Piece {
             hole: true,
@@ -383,14 +431,14 @@ mod tests {
             Ok(b) => b,
             Err(e) => panic!("Failed to construct board! {}", e),
         };
-        assert!(board.full_column(0));
+        assert!(board.winning_column(0));
         for i in 1..4 {
-            assert!(!board.full_column(i));
+            assert!(!board.winning_column(i));
         }
     }
 
     #[test]
-    fn test_full_column_non_winning_column() {
+    fn test_winning_column_non_winning_column() {
         let mut pboard_items: Vec<Option<Piece>> = Vec::new();
         pboard_items.push(Some(Piece {
             hole: true,
@@ -437,18 +485,18 @@ mod tests {
             Err(e) => panic!("Failed to construct board! {}", e),
         };
         for i in 0..4 {
-            assert!(!board.full_column(i));
+            assert!(!board.winning_column(i));
         }
     }
 
     #[test]
-    fn test_full_diagonal_empty_board() {
+    fn test_winning_diagonal_empty_board() {
         let board: Board = Board::new();
-        assert!(!board.full_diagonal());
+        assert!(!board.winning_diagonal());
     }
 
     #[test]
-    fn test_full_diagonal_non_winning() {
+    fn test_winning_diagonal_non_winning() {
         let mut items: Vec<Option<Piece>> = Vec::new();
         items.push(Some(Piece {
             hole: true,
@@ -491,11 +539,11 @@ mod tests {
             Ok(b) => b,
             Err(e) => panic!("Unable to construct the board from printable! {}", e),
         };
-        assert!(!board.full_diagonal())
+        assert!(!board.winning_diagonal())
     }
 
     #[test]
-    fn test_full_diagonal_winning() {
+    fn test_winning_diagonal_winning() {
         let mut items: Vec<Option<Piece>> = Vec::new();
         items.push(Some(Piece {
             hole: true,
@@ -538,7 +586,7 @@ mod tests {
             Ok(b) => b,
             Err(e) => panic!("Unable to construct the board from printable! {}", e),
         };
-        assert!(board.full_diagonal())
+        assert!(board.winning_diagonal())
     }
 
     #[test]
@@ -548,6 +596,15 @@ mod tests {
         assert_eq!(board.items(), 0);
         assert!(!board.put_piece(0, 16));
         assert_eq!(board.items(), 0);
+    }
+    
+    #[test]
+    fn test_put_duplicate_piece() {
+        let mut board: Board = Board::new();
+        // First attempt to put piece 0 on the board.
+        assert!(board.put_piece(0, 0));
+        // Then try to put piece 0 again, but now in a different spot.
+        assert!(!board.put_piece(0, 1));
     }
 
     #[test]
@@ -572,5 +629,81 @@ mod tests {
             },
             None => panic!("Unable to get first item from the printable board!"),
         }
+    }
+
+    #[test]
+    fn test_board_full_empty_board() {
+        let board: Board = Board::new();
+        assert!(!board.board_full());
+    }
+
+    #[test]
+    fn test_board_full() {
+        let mut items: u128 = 0;
+        for i in 0..16 {
+            items += 1 << (i * PIECE_SIZE);
+        }
+        let board: Board = Board::from_u128(items);
+        assert!(board.board_full());
+    }
+
+    #[test]
+    fn test_board_full_almost_full() {
+        let mut items: u128 = 0;
+        // Lets only put 10 pieces on the board.
+        for i in 0..10 {
+            items += 1 << (i * PIECE_SIZE);
+        }
+        let board: Board = Board::from_u128(items);
+        assert!(!board.board_full());
+    }
+
+    #[test]
+    fn test_has_winner_new_board() {
+        let board: Board = Board::new();
+        assert!(!board.has_winner());
+    }
+
+    #[test]
+    fn test_has_winner_actual_winning() {
+        let mut items: Vec<Option<Piece>> = Vec::new();
+        // Add 4 items in a row that have a hole and nothing else in common.
+        items.push(Some(Piece {
+            hole: true,
+            square: false,
+            high: false,
+            dark: false,
+        }));
+        items.push(Some(Piece {
+            hole: true,
+            square: true,
+            high: false,
+            dark: false,
+        }));
+        items.push(Some(Piece {
+            hole: true,
+            square: false,
+            high: true,
+            dark: false,
+        }));
+        items.push(Some(Piece {
+            hole: true,
+            square: false,
+            high: false,
+            dark: true,
+        }));
+        // Add empty spaces.
+        for _ in 0..12 {
+            items.push(None);
+        }
+        let pboard: PrintableBoard = match PrintableBoard::from_list(items) {
+            Some(pb) => pb,
+            None => panic!("Unable to create printable board!"),
+        };
+        let board: Board = match Board::from_printable(&pboard) {
+            Ok(b) => b,
+            Err(e) => panic!("Unable to create board from printable! {}", e),
+        };
+        assert!(board.has_winner())
     }
 }

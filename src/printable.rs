@@ -1,4 +1,8 @@
-use crate::board::Board;
+// Author: @julianvansanten
+// An easy to debug board with a list of pieces.
+// This implementation uses a lot of memory (reads/writes), so there is only a way to go from this board to the bitboard.
+
+use crate::board::{Board, PIECE_SIZE};
 /// Representation for the board that is easier to print.
 /// Uses `Some(Piece)`s to store each piece, is easier to print but way slower to operate on.
 /// If there is no Piece on a location, we store a `None`.
@@ -22,19 +26,20 @@ impl PrintableBoard {
     /// Take the `u128`, shift over the bits, AND it with 255 and turn it into a `u8`.
     pub fn from_board(board: Board) -> Self {
         let mut items: Vec<Option<Piece>> = Vec::new();
-        // Reverse the for loop to start at the first 8 bits
+        // Reverse the for loop to start at the first (leftmost) 8 bits
         for shift in (0..16).rev() {
-            let u8piece: u8 = (board.items() >> (8 * shift) & 255) as u8;
+            let u8piece: u8 = (board.items() >> (PIECE_SIZE * shift) & 255) as u8;
             items.push(Piece::from_u8(u8piece));
         }
         PrintableBoard { items }
     }
-    
+
     /// Create a deep copy of the items in the board.
     pub fn items(&self) -> Vec<Option<Piece>> {
         let mut res: Vec<Option<Piece>> = Vec::new();
         for option in self.items.iter() {
             res.push(match option {
+                // Must be a `clone` to create a copy of the piece!
                 Some(p) => Some(p.clone()),
                 None => None,
             });
@@ -152,17 +157,17 @@ mod tests {
             let piece: Option<Piece> = Piece::from_u8((i << 4) + 1);
             pieces.push(piece);
         }
-        
+
         let pboard: PrintableBoard = match PrintableBoard::from_list(pieces) {
             Some(pboard) => pboard,
             None => panic!("PrintableBoard not correctly initialized!"),
         };
-        
+
         let board: Board = match Board::from_printable(&pboard) {
             Ok(b) => b,
             Err(_) => panic!("Board conversion failed!"),
         };
-        
+
         match Board::from_printable(&PrintableBoard::from_board(board)) {
             Ok(board2) => assert_eq!(board, board2),
             Err(_) => panic!("Double conversion failed!"),
