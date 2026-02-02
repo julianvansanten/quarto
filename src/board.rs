@@ -559,8 +559,7 @@ mod tests {
         let items = pboard.items();
         match items.first() {
             Some(option) => match option {
-                Some(piece) => 
-                assert_eq!(
+                Some(piece) => assert_eq!(
                     *piece,
                     Piece {
                         hole: false,
@@ -570,7 +569,7 @@ mod tests {
                     }
                 ),
                 None => panic!("There is no piece in the first spot!"),
-            }
+            },
             None => panic!("Unable to get first item from the printable board!"),
         }
     }
