@@ -53,7 +53,7 @@ impl Board {
         let mut board: Board = Board::new();
         for (i, option) in pboard_items.iter().enumerate() {
             match option {
-                // Some(piece) => items += (piece.to_u8() as u128) << ((15 - i) * 8),
+                // Safely place the items on the board, return an `Err` if there is a duplicate.
                 Some(piece) => if !board.put_piece(piece.to_u8(), i as u8) {
                     // TODO: add formatted string that tells why it failed.
                     return Err("Unable to put item on board! Perhaps it already exists?");
