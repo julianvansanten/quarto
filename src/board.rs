@@ -422,7 +422,62 @@ mod tests {
     }
     
     #[test]
-    fn test_full_diagonal() {
-        todo!("This must be implemented still!")
+    fn test_full_diagonal_empty_board() {
+        let board: Board = Board::new();
+        assert!(!board.full_diagonal());
+    }
+    
+    #[test]
+    fn test_full_diagonal_non_winning() {
+        let mut items: Vec<Option<Piece>> = Vec::new();
+        items.push(Some(Piece { hole: true, square: false, high: false, dark: false }));
+        for _ in 0..4 {
+            items.push(None);
+        }
+        items.push(Some(Piece { hole: false, square: true, high: false, dark: false }));
+        for _ in 0..4 {
+            items.push(None);
+        }
+        items.push(Some(Piece { hole: false, square: false, high: true, dark: false }));
+        for _ in 0..4 {
+            items.push(None);
+        }
+        items.push(Some(Piece { hole: false, square: false, high: false, dark: true }));
+        let pboard: PrintableBoard = match PrintableBoard::from_list(items) {
+            Some(pb) => pb,
+            None => panic!("Unable to create the diagonal board!"),
+        };
+        let board: Board = match Board::from_printable(&pboard) {
+            Ok(b) => b,
+            Err(e) => panic!("Unable to construct the board from printable! {}", e),
+        };
+        assert!(!board.full_diagonal())
+    }
+    
+    #[test]
+    fn test_full_diagonal_winning() {
+        let mut items: Vec<Option<Piece>> = Vec::new();
+        items.push(Some(Piece { hole: true, square: false, high: false, dark: false }));
+        for _ in 0..4 {
+            items.push(None);
+        }
+        items.push(Some(Piece { hole: true, square: true, high: false, dark: false }));
+        for _ in 0..4 {
+            items.push(None);
+        }
+        items.push(Some(Piece { hole: true, square: false, high: true, dark: false }));
+        for _ in 0..4 {
+            items.push(None);
+        }
+        items.push(Some(Piece { hole: true, square: false, high: false, dark: true }));
+        let pboard: PrintableBoard = match PrintableBoard::from_list(items) {
+            Some(pb) => pb,
+            None => panic!("Unable to create the diagonal board!"),
+        };
+        let board: Board = match Board::from_printable(&pboard) {
+            Ok(b) => b,
+            Err(e) => panic!("Unable to construct the board from printable! {}", e),
+        };
+        assert!(board.full_diagonal())
     }
 }
