@@ -4,14 +4,19 @@ use crate::printable::PrintableBoard;
 const PIECE_SIZE: u8 = 8;
 /// The bits set to check existence in the right-most column.
 /// Left-shift `COLUMN` by PIECE per column.
-const COLUMN: u128 = 0b1 + (0b1 << 4 * PIECE_SIZE) + (0b1 << 8 * PIECE_SIZE) + (0b1 << 12 * PIECE_SIZE);
+const COLUMN: u128 =
+    0b1 + (0b1 << 4 * PIECE_SIZE) + (0b1 << 8 * PIECE_SIZE) + (0b1 << 12 * PIECE_SIZE);
 /// The bits set to check existence in the lowest row.
 /// Left-shift `ROW` by 4 * PIECE per row.
 const ROW: u128 = 0b1 + (0b1 << PIECE_SIZE) + (0b1 << 2 * PIECE_SIZE) + (0b1 << 3 * PIECE_SIZE);
-/// The bits set to check existence in the down diagonal. 
-const DIAG_DOWN: u128 = 0b1 + (0b1 << 5 * PIECE_SIZE) + (0b1 << 10 * PIECE_SIZE) + (0b1 << 15 * PIECE_SIZE);
+/// The bits set to check existence in the down diagonal.
+const DIAG_DOWN: u128 =
+    0b1 + (0b1 << 5 * PIECE_SIZE) + (0b1 << 10 * PIECE_SIZE) + (0b1 << 15 * PIECE_SIZE);
 /// The bits set to check existence in the up diagonal.
-const DIAG_UP: u128 = (0b1 << 3 * PIECE_SIZE) + (0b1 << 6 * PIECE_SIZE) + (0b1 << 9 * PIECE_SIZE) + (0b1 << 12 * PIECE_SIZE);
+const DIAG_UP: u128 = (0b1 << 3 * PIECE_SIZE)
+    + (0b1 << 6 * PIECE_SIZE)
+    + (0b1 << 9 * PIECE_SIZE)
+    + (0b1 << 12 * PIECE_SIZE);
 
 /// A Quarto board is stored as a `u128`.
 /// Each cell is 8 bits, so the entire board is 8 * 16 = 128.
@@ -53,11 +58,11 @@ impl Board {
     pub fn items(&self) -> u128 {
         self.items
     }
-    
+
     /// Check if the index on the board is empty.
     pub fn is_empty(&self, index: u8) -> bool {
         if index > 15 {
-            return false
+            return false;
         }
         let pos_mask: u128 = 0b1 << ((15 - index) * PIECE_SIZE);
         self.items & pos_mask == 0
@@ -67,7 +72,7 @@ impl Board {
     /// The `row` value must lie between 0 and (incl.) 3.
     fn row(&self, row: u8) -> bool {
         if row > 3 {
-            return false
+            return false;
         }
         let row_mask = ROW << (4 * PIECE_SIZE * (3 - row));
         self.items & row_mask == row_mask
@@ -82,47 +87,68 @@ impl Board {
         let col_mask = COLUMN << (PIECE_SIZE * (3 - column));
         self.items & col_mask == col_mask
     }
-    
-    /// Check if the diagonal is full.
-    fn diagonal(&self) -> bool {
-        self.items & DIAG_DOWN == DIAG_DOWN || self.items & DIAG_UP == DIAG_UP
-    }
-    
-    /// Check if a row on the board is full and has blocks with at least one characteristic.
+
+    /// Check if a row on the board is full and has blocks with one common characteristic.
     /// The `row` value must lie between 0 and (incl.) 3.
     pub fn full_row(&self, row: u8) -> bool {
         if !self.row(row) {
-            return false
+            return false;
         }
         for t in 4..8 {
             let row_mask = ROW << (4 * PIECE_SIZE * (3 - row) + t);
             if self.items & row_mask == row_mask || self.items & row_mask == 0 {
-                return true
+                return true;
             }
         }
         false
     }
-    
-    /// Check if a column on the board is full and has blocks with at least one characteristic.
+
+    /// Check if a column on the board is full and has blocks with one common characteristic.
     /// The `column` value must lie between 0 and (incl.) 3.
     pub fn full_column(&self, column: u8) -> bool {
         if !self.column(column) {
-            return false
+            return false;
         }
         for t in 4..8 {
             let col_mask = COLUMN << (PIECE_SIZE * (3 - column) + t);
             if self.items & col_mask == col_mask || self.items & col_mask == 0 {
-                return true
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Check if a diagonal on the board is full and has blocks with one common characteristic.
+    pub fn full_diagonal(&self) -> bool {
+        for t in 4..8 {
+            let diag_up_mask = DIAG_UP << t;
+            let diag_down_mask = DIAG_DOWN << t;
+            let up_and = self.items & diag_up_mask;
+            let down_and = self.items & diag_down_mask;
+            if self.items & DIAG_UP == DIAG_UP && (up_and == diag_up_mask || up_and == 0) {
+                return true;
+            }
+            if self.items & DIAG_DOWN == DIAG_DOWN && (down_and == diag_down_mask || down_and == 0) {
+                return true;
             }
         }
         false
     }
     
-    pub fn full_diagonal(&self) -> bool {
-        if !self.diagonal() {
+    /// Put a piece (given as a number from 0 to (incl.) 15) on the board at a given index.
+    /// Returns true if the piece was placed, false otherwise.
+    pub fn put_piece(&mut self, piece: u8, index: u8) -> bool {
+        // Cannot put a nonexisting piece on the board, or with an invalid index.
+        if piece > 15 || index > 15 {
             return false
         }
-        todo!("Implement diagonal check for existing items")
+        let bit_index: u8 = 15 - index;
+        // Cannot put a piece in an existing place.
+        if (1 << PIECE_SIZE * bit_index) & self.items != 0 {
+            return false
+        }
+        self.items += ((piece << 4 + PIECE_SIZE * bit_index) + (1 << PIECE_SIZE * bit_index)) as u128;
+        todo!("Test this function.")
     }
 }
 
@@ -163,7 +189,7 @@ mod tests {
             assert!(!board.column(c));
         }
     }
-    
+
     #[test]
     fn test_is_empty_new_board() {
         let board: Board = Board::new();
@@ -171,7 +197,7 @@ mod tests {
             assert!(board.is_empty(x));
         }
     }
-    
+
     #[test]
     fn test_is_empty_non_empty_board() {
         let board: Board = Board::from_u128(1);
@@ -180,39 +206,29 @@ mod tests {
             assert!(board.is_empty(x));
         }
     }
-    
+
     #[test]
     fn test_row_first() {
-        let num: u128 = (1 << (127 - 31)) + (1 << (127 - 23)) + (1 << (127 - 15)) + (1 << (127 - 7));
+        let num: u128 =
+            (1 << (127 - 31)) + (1 << (127 - 23)) + (1 << (127 - 15)) + (1 << (127 - 7));
         let board = Board::from_u128(num);
         assert!(board.row(0));
         for row in 1..4 {
             assert!(!board.row(row))
         }
     }
-    
+
     #[test]
     fn test_column_first() {
-        let num: u128 = (1 << (127 - 7)) + (1 << (127 - 39)) + (1 << (127 - 71)) + (1 << (127 - 103));
+        let num: u128 =
+            (1 << (127 - 7)) + (1 << (127 - 39)) + (1 << (127 - 71)) + (1 << (127 - 103));
         let board = Board::from_u128(num);
         assert!(board.column(0));
         for column in 1..4 {
             assert!(!board.column(column))
         }
     }
-    
-    #[test]
-    fn test_diagonals() {
-        let board: Board = Board::new();
-        assert!(!board.diagonal());
-        let num: u128 = 1 + (1 << (127 - 87)) + (1 << (127 - 47)) + (1 << (127 - 7));
-        let board: Board = Board::from_u128(num);
-        assert!(board.diagonal());
-        let num: u128 = (1 << (127 - 103)) + (1 << (127 - 79)) + (1 << (127 - 55)) + (1 << (127 - 31));
-        let board: Board = Board::from_u128(num);
-        assert!(board.diagonal());
-    }
-    
+
     #[test]
     fn test_full_row_empty_board() {
         let board: Board = Board::new();
@@ -220,7 +236,7 @@ mod tests {
             assert!(!board.full_row(x))
         }
     }
-    
+
     #[test]
     fn test_full_column_empty_board() {
         let board: Board = Board::new();
@@ -228,29 +244,29 @@ mod tests {
             assert!(!board.full_column(x))
         }
     }
-    
+
     #[test]
     fn test_full_row_winning_row() {
         let mut pboard_items: Vec<Option<Piece>> = Vec::new();
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: false,
             high: false,
             dark: false,
         }));
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: true,
             high: false,
             dark: false,
         }));
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: false,
             high: true,
             dark: false,
         }));
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: false,
             high: false,
@@ -272,29 +288,29 @@ mod tests {
             assert!(!board.full_row(i));
         }
     }
-    
+
     #[test]
     fn test_full_row_non_winning_row() {
         let mut pboard_items: Vec<Option<Piece>> = Vec::new();
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: false,
             high: false,
             dark: false,
         }));
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: false,
             square: true,
             high: false,
             dark: false,
         }));
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: false,
             square: false,
             high: true,
             dark: false,
         }));
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: false,
             square: false,
             high: false,
@@ -315,11 +331,11 @@ mod tests {
             assert!(!board.full_row(i));
         }
     }
-    
+
     #[test]
     fn test_full_column_winning_column() {
         let mut pboard_items: Vec<Option<Piece>> = Vec::new();
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: false,
             high: false,
@@ -328,7 +344,7 @@ mod tests {
         for _ in 0..3 {
             pboard_items.push(None);
         }
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: true,
             high: false,
@@ -337,7 +353,7 @@ mod tests {
         for _ in 0..3 {
             pboard_items.push(None);
         }
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: false,
             high: true,
@@ -346,7 +362,7 @@ mod tests {
         for _ in 0..3 {
             pboard_items.push(None);
         }
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: false,
             high: false,
@@ -368,11 +384,11 @@ mod tests {
             assert!(!board.full_column(i));
         }
     }
-    
+
     #[test]
     fn test_full_column_non_winning_column() {
         let mut pboard_items: Vec<Option<Piece>> = Vec::new();
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: true,
             square: false,
             high: false,
@@ -381,7 +397,7 @@ mod tests {
         for _ in 0..3 {
             pboard_items.push(None);
         }
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: false,
             square: true,
             high: false,
@@ -390,7 +406,7 @@ mod tests {
         for _ in 0..3 {
             pboard_items.push(None);
         }
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: false,
             square: false,
             high: true,
@@ -399,7 +415,7 @@ mod tests {
         for _ in 0..3 {
             pboard_items.push(None);
         }
-        pboard_items.push(Some(Piece{
+        pboard_items.push(Some(Piece {
             hole: false,
             square: false,
             high: false,
@@ -420,29 +436,49 @@ mod tests {
             assert!(!board.full_column(i));
         }
     }
-    
+
     #[test]
     fn test_full_diagonal_empty_board() {
         let board: Board = Board::new();
         assert!(!board.full_diagonal());
     }
-    
+
     #[test]
     fn test_full_diagonal_non_winning() {
         let mut items: Vec<Option<Piece>> = Vec::new();
-        items.push(Some(Piece { hole: true, square: false, high: false, dark: false }));
+        items.push(Some(Piece {
+            hole: true,
+            square: false,
+            high: false,
+            dark: false,
+        }));
         for _ in 0..4 {
             items.push(None);
         }
-        items.push(Some(Piece { hole: false, square: true, high: false, dark: false }));
+        items.push(Some(Piece {
+            hole: false,
+            square: true,
+            high: false,
+            dark: false,
+        }));
         for _ in 0..4 {
             items.push(None);
         }
-        items.push(Some(Piece { hole: false, square: false, high: true, dark: false }));
+        items.push(Some(Piece {
+            hole: false,
+            square: false,
+            high: true,
+            dark: false,
+        }));
         for _ in 0..4 {
             items.push(None);
         }
-        items.push(Some(Piece { hole: false, square: false, high: false, dark: true }));
+        items.push(Some(Piece {
+            hole: false,
+            square: false,
+            high: false,
+            dark: true,
+        }));
         let pboard: PrintableBoard = match PrintableBoard::from_list(items) {
             Some(pb) => pb,
             None => panic!("Unable to create the diagonal board!"),
@@ -453,23 +489,43 @@ mod tests {
         };
         assert!(!board.full_diagonal())
     }
-    
+
     #[test]
     fn test_full_diagonal_winning() {
         let mut items: Vec<Option<Piece>> = Vec::new();
-        items.push(Some(Piece { hole: true, square: false, high: false, dark: false }));
+        items.push(Some(Piece {
+            hole: true,
+            square: false,
+            high: false,
+            dark: false,
+        }));
         for _ in 0..4 {
             items.push(None);
         }
-        items.push(Some(Piece { hole: true, square: true, high: false, dark: false }));
+        items.push(Some(Piece {
+            hole: true,
+            square: true,
+            high: false,
+            dark: false,
+        }));
         for _ in 0..4 {
             items.push(None);
         }
-        items.push(Some(Piece { hole: true, square: false, high: true, dark: false }));
+        items.push(Some(Piece {
+            hole: true,
+            square: false,
+            high: true,
+            dark: false,
+        }));
         for _ in 0..4 {
             items.push(None);
         }
-        items.push(Some(Piece { hole: true, square: false, high: false, dark: true }));
+        items.push(Some(Piece {
+            hole: true,
+            square: false,
+            high: false,
+            dark: true,
+        }));
         let pboard: PrintableBoard = match PrintableBoard::from_list(items) {
             Some(pb) => pb,
             None => panic!("Unable to create the diagonal board!"),
