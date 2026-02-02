@@ -128,27 +128,31 @@ impl Board {
             if self.items & DIAG_UP == DIAG_UP && (up_and == diag_up_mask || up_and == 0) {
                 return true;
             }
-            if self.items & DIAG_DOWN == DIAG_DOWN && (down_and == diag_down_mask || down_and == 0) {
+            if self.items & DIAG_DOWN == DIAG_DOWN && (down_and == diag_down_mask || down_and == 0)
+            {
                 return true;
             }
         }
         false
     }
-    
+
     /// Put a piece (given as a number from 0 to (incl.) 15) on the board at a given index.
     /// Returns true if the piece was placed, false otherwise.
     pub fn put_piece(&mut self, piece: u8, index: u8) -> bool {
         // Cannot put a nonexisting piece on the board, or with an invalid index.
         if piece > 15 || index > 15 {
-            return false
+            return false;
         }
-        let bit_index: u8 = 15 - index;
+        let bit_index = 15 - index;
         // Cannot put a piece in an existing place.
-        if (1 << PIECE_SIZE * bit_index) & self.items != 0 {
-            return false
+        if (1 << PIECE_SIZE * bit_index + 1) & self.items != 0 {
+            return false;
         }
-        self.items += ((piece << 4 + PIECE_SIZE * bit_index) + (1 << PIECE_SIZE * bit_index)) as u128;
-        todo!("Test this function.")
+        // Shift left the existence bit, then shift left the piece type (extra offset of 4 from the existence bit).
+        // Finally, add it to the board.
+        self.items +=
+            (1 << (PIECE_SIZE * bit_index)) + ((piece as u128) << (PIECE_SIZE * bit_index) + 4);
+        true
     }
 }
 
@@ -535,5 +539,39 @@ mod tests {
             Err(e) => panic!("Unable to construct the board from printable! {}", e),
         };
         assert!(board.full_diagonal())
+    }
+
+    #[test]
+    fn test_put_invalid_piece() {
+        let mut board: Board = Board::new();
+        assert!(!board.put_piece(16, 0));
+        assert_eq!(board.items(), 0);
+        assert!(!board.put_piece(0, 16));
+        assert_eq!(board.items(), 0);
+    }
+
+    #[test]
+    fn test_put_valid_piece() {
+        let mut board: Board = Board::new();
+        assert!(board.put_piece(1, 0));
+        assert_ne!(board.items(), 0);
+        let pboard: PrintableBoard = PrintableBoard::from_board(board);
+        let items = pboard.items();
+        match items.first() {
+            Some(option) => match option {
+                Some(piece) => 
+                assert_eq!(
+                    *piece,
+                    Piece {
+                        hole: false,
+                        square: false,
+                        high: false,
+                        dark: true
+                    }
+                ),
+                None => panic!("There is no piece in the first spot!"),
+            }
+            None => panic!("Unable to get first item from the printable board!"),
+        }
     }
 }
