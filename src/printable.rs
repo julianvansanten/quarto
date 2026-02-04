@@ -70,9 +70,9 @@ impl Piece {
         }
     }
 
-    /// Create a Piece from a u8, if possible
+    /// Create a Piece from a u8, if possible.
     pub fn from_u8(input: u8) -> Option<Self> {
-        // If the existence bit is not set, return None
+        // If the existence bit is not set, return None.
         if input & 1u8 == 0 {
             return None;
         }
@@ -84,13 +84,14 @@ impl Piece {
         })
     }
 
-    /// Create a u8 from this Piece, for debugging only.
-    pub fn to_u8(&self) -> u8 {
-        let mut res: u8 = 1;
-        res += (self.hole as u8) << 7;
-        res += (self.square as u8) << 6;
-        res += (self.high as u8) << 5;
-        res += (self.dark as u8) << 4;
+    /// Convert the `Piece` to a number between 0 and (incl.) 15.
+    /// This number can be used to place a piece on the board.
+    pub fn to_number(&self) -> u8 {
+        let mut res: u8 = 0;
+        res += (self.hole as u8) << 3;
+        res += (self.square as u8) << 2;
+        res += (self.high as u8) << 1;
+        res += self.dark as u8;
         res
     }
 }
@@ -137,12 +138,12 @@ mod tests {
     }
 
     #[test]
-    fn test_pp_to_u8() {
+    fn test_pp_to_number() {
         let piece = match Piece::from_u8(1) {
             Some(piece) => piece,
             None => panic!("This is not supposed to happen, check Piece::from_u8()!"),
         };
-        assert_eq!(piece.to_u8(), 1)
+        assert_eq!(piece.to_number(), 0)
     }
 
     #[test]
