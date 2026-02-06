@@ -203,6 +203,28 @@ impl Board {
         }
         true
     }
+    
+    /// Return the indices that are empty.
+    pub fn empty_spaces(&self) -> Vec<u8> {
+        let mut res: Vec<u8> = Vec::new();
+        for i in 0..16 {
+            if self.items & (1 << ((15 - i) * PIECE_SIZE)) == 0 {
+                res.push(i);
+            }
+        }
+        res
+    }
+    
+    /// Return a list of valid pieces (expensive!).
+    pub fn valid_pieces(&self) -> Vec<u8> {
+        let mut pieces: Vec<u8> = Vec::new();
+        for p in 0..16 {
+            if self.valid_piece(p) {
+                pieces.push(p);
+            }
+        }
+        pieces
+    }
 }
 
 #[cfg(test)]
