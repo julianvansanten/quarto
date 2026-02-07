@@ -1,7 +1,6 @@
 // Author: @julianvansanten
 // Players that can play the Quarto game.
 // Uses the `Board` to determine the moves.
-
 use crate::board::Board;
 
 /// An abstraction of a `Player` that can play Quarto.
@@ -31,7 +30,7 @@ pub trait Strategy {
     fn quarto(&self, board: &Board) -> bool;
 }
 
-// TODO: add a BufReader for a `HumanPlayer`.
+// TODO: Use an Adapter for UI decoupling.
 pub struct HumanPlayer;
 pub struct ComputerPlayer<T: Strategy> {
     /// A `ComputerPlayer` uses a `Strategy` to determine its decisions.
@@ -48,16 +47,16 @@ impl<T: Strategy> ComputerPlayer<T> {
 impl Player for HumanPlayer {
     /// Ask the player for the piece to play.
     fn get_piece(&self, board: &Board) -> Option<u8> {
-        todo!()
+        todo!("First, print the possible pieces.\nThen, ask the player which piece they want to give the other player.");
     }
 
     /// Ask the player for the move to make, based on a given piece.
     fn get_move(&self, board: &Board, piece: u8) -> Option<u8> {
-        todo!()
+        todo!("First, print the board, along with the piece to place.\nThen, ask the player where to place the given piece.")
     }
 
     fn quarto(&self, board: &Board) -> bool {
-        todo!()
+        todo!("Ask the player if they wish to call Quarto every time.")
     }
 }
 
