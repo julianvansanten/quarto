@@ -2,6 +2,8 @@
 // An easy to debug board with a list of pieces.
 // This implementation uses a lot of memory (reads/writes), so there is only a way to go from this board to the bitboard.
 
+use std::fmt::Display;
+
 use crate::board::{Board, PIECE_SIZE};
 /// Representation for the board that is easier to print.
 /// Uses `Some(Piece)`s to store each piece, is easier to print but way slower to operate on.
@@ -57,6 +59,32 @@ pub struct Piece {
     pub square: bool, // shape
     pub high: bool,   // size
     pub dark: bool,   // color
+}
+
+impl Display for Piece {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let size = if self.high {
+            "Large"
+        } else {
+            "Small"
+        };
+        let color = if self.dark {
+            "dark"
+        } else {
+            "light"
+        };
+        let form = if self.square {
+            "square"
+        } else {
+            "circle"
+        };
+        let hole = if self.hole {
+            "with"
+        } else {
+            "without"
+        };
+        write!(f, "{}, {} {} {} hole", size, color, form, hole)
+    }
 }
 
 impl Piece {

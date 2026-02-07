@@ -2,6 +2,8 @@
 // Players that can play the Quarto game.
 // Uses the `Board` to determine the moves.
 
+use crate::printable::Piece;
+use crate::ui::Warning::{IncorrectIndex, IncorrectPiece};
 use crate::{board::Board, strategy::Strategy, ui::PlayerInterface};
 
 /// An abstraction of a `Player` that can play Quarto.
@@ -51,7 +53,8 @@ impl<I: PlayerInterface> Player for HumanPlayer<I> {
         }
         let mut piece = self.interface.prompt_for_piece(board);
         while !board.valid_piece(piece) {
-            // TODO: warn the user via the interface
+            // TODO: fix this question
+            // self.interface.warn_player(IncorrectPiece(Piece::from_u8(piece)));
             piece = self.interface.prompt_for_piece(board);
         }
         Some(piece)
@@ -66,7 +69,7 @@ impl<I: PlayerInterface> Player for HumanPlayer<I> {
         }
         let mut get_move = self.interface.prompt_for_move(board, piece);
         while !board.empty_index(get_move) {
-            // TODO: warn the user via the interface
+            self.interface.warn_player(IncorrectIndex(get_move));
             get_move = self.interface.prompt_for_move(board, piece);
         }
         Some(self.interface.prompt_for_move(board, piece))
