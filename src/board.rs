@@ -173,19 +173,20 @@ impl Board {
     pub fn game_over(&self) -> bool {
         self.has_winner() || self.board_full()
     }
+    
+    /// Check if a given index is empty to place on the board.
+    pub fn empty_index(&self, index: u8) -> bool {
+        index < 16 && self.items & (1 << PIECE_SIZE * (15 - index)) == 0
+    }
 
     /// Put a piece (given as a number from 0 to (incl.) 15) on the board at a given index.
     /// Returns true if the piece was placed, false otherwise.
     pub fn put_piece(&mut self, piece: u8, index: u8) -> bool {
         // Cannot put a nonexisting piece on the board, or with an invalid index.
-        if index > 15 || !self.valid_piece(piece) {
+        if !self.empty_index(index) || !self.valid_piece(piece) {
             return false;
         }
         let bit_index = 15 - index;
-        // Cannot put a piece in an existing place.
-        if (1 << PIECE_SIZE * bit_index + 1) & self.items != 0 {
-            return false;
-        }
         // Shift left the existence bit, then shift left the piece type (extra offset of 4 from the existence bit).
         // Finally, add it to the board.
         self.items +=
@@ -202,7 +203,9 @@ impl Board {
         }
         for p in 0..16 {
             let piece_mask = (piece as u128) << (PIECE_SIZE * p + 4);
-            if self.items & (1 << PIECE_SIZE * p) != 0 && self.items & piece_mask == piece_mask {
+            if self.items & (1 << PIECE_SIZE * p) != 0
+                && (self.items & (0b1111 << PIECE_SIZE * p + 4)) ^ piece_mask == 0
+            {
                 return false;
             }
         }
@@ -250,6 +253,28 @@ mod tests {
     fn test_is_empty_empty_board() {
         let board = Board::new();
         assert!(board.is_empty())
+    }
+    
+    #[test]
+    fn test_empty_index_empty_board() {
+        let board = Board::new();
+        for i in 0..16 {
+            assert!(board.empty_index(i))
+        }
+    }
+    
+    #[test]
+    fn test_empty_index_nonempty_board() {
+        let mut board = Board::new();
+        let index = fastrand::u8(..16);
+        board.put_piece(0, index);
+        for i in 0..16 {
+            if index == i {
+                assert!(!board.empty_index(i))
+            } else {
+                assert!(board.empty_index(i))
+            }
+        }
     }
 
     #[test]
@@ -680,6 +705,15 @@ mod tests {
             None => panic!("Unable to get first item from the printable board!"),
         }
     }
+    
+    #[test]
+    fn test_put_piece_different_pieces_same_place() {
+        let mut board: Board = Board::new();
+        let empty = board.empty_spaces();
+        let spot: usize = fastrand::usize(..empty.len());
+        assert!(board.put_piece(1, spot as u8));
+        assert!(!board.put_piece(2, spot as u8));
+    }
 
     #[test]
     fn test_board_full_empty_board() {
@@ -755,5 +789,55 @@ mod tests {
             Err(e) => panic!("Unable to create board from printable! {}", e),
         };
         assert!(board.has_winner())
+    }
+
+    #[test]
+    fn test_game_over_empty_board() {
+        let board: Board = Board::new();
+        assert!(!board.game_over())
+    }
+
+    #[test]
+    fn test_game_over_winner() {
+        let mut board: Board = Board::new();
+        board.put_piece(0, 0);
+        board.put_piece(2, 1);
+        board.put_piece(4, 2);
+        board.put_piece(6, 3);
+        assert!(board.game_over())
+    }
+
+    #[test]
+    fn test_game_over_non_winner() {
+        let mut board: Board = Board::new();
+        board.put_piece(0, 0);
+        board.put_piece(2, 1);
+        board.put_piece(4, 2);
+        board.put_piece(15, 3);
+        assert!(!board.game_over())
+    }
+    
+    #[test]
+    fn test_random_board_progression() {
+        let mut board: Board = Board::new();
+        // Generate a random number of steps to take before the board is full.
+        let steps = fastrand::u8(..15);
+        let mut used_pieces: Vec<u8> = Vec::new();
+        let mut used_indices: Vec<u8> = Vec::new();
+        for _ in 0..steps {
+            let pieces = board.valid_pieces();
+            let p = fastrand::usize(..pieces.len());
+            let indices = board.empty_spaces();
+            let s = fastrand::usize(..indices.len());
+            assert!(board.put_piece(pieces[p], indices[s]));
+            used_pieces.push(pieces[p]);
+            used_indices.push(indices[s]);
+        }
+        for p in used_pieces {
+            assert!(!board.valid_piece(p));
+        }
+        for s in used_indices {
+            assert!(!board.index_empty(s));
+        }
     }
 }
