@@ -38,6 +38,11 @@ impl Board {
         Board { items: 0 }
     }
 
+    /// Check if the board is empty.
+    pub fn is_empty(&self) -> bool {
+        self.items == 0
+    }
+
     /// Create a `Board` from a `PrintableBoard`.
     pub fn from_printable(pboard: &PrintableBoard) -> Result<Self, &'static str> {
         let pboard_items = pboard.items();
@@ -67,7 +72,7 @@ impl Board {
     }
 
     /// Check if the index on the board is empty.
-    pub fn is_empty(&self, index: u8) -> bool {
+    pub fn index_empty(&self, index: u8) -> bool {
         if index > 15 {
             return false;
         }
@@ -203,7 +208,7 @@ impl Board {
         }
         true
     }
-    
+
     /// Return the indices that are empty.
     pub fn empty_spaces(&self) -> Vec<u8> {
         let mut res: Vec<u8> = Vec::new();
@@ -214,7 +219,7 @@ impl Board {
         }
         res
     }
-    
+
     /// Return a list of valid pieces (expensive!).
     pub fn valid_pieces(&self) -> Vec<u8> {
         let mut pieces: Vec<u8> = Vec::new();
@@ -242,9 +247,31 @@ mod tests {
     }
 
     #[test]
-    fn test_items() {
+    fn test_is_empty_empty_board() {
+        let board = Board::new();
+        assert!(board.is_empty())
+    }
+
+    #[test]
+    fn test_is_empty_nonempty_board() {
+        let mut board = Board::new();
+        let random_index = fastrand::u8(..16);
+        let random_piece = fastrand::u8(..16);
+        board.put_piece(random_piece, random_index);
+        assert!(!board.is_empty())
+    }
+
+    #[test]
+    fn test_items_empty_board() {
         let board = Board::new();
         assert_eq!(board.items(), 0);
+    }
+
+    #[test]
+    fn test_items_nonempty_board() {
+        let mut board = Board::new();
+        board.put_piece(0, 15);
+        assert_eq!(board.items(), 1)
     }
 
     #[test]
@@ -269,16 +296,16 @@ mod tests {
     fn test_is_empty_new_board() {
         let board: Board = Board::new();
         for x in 0..16 {
-            assert!(board.is_empty(x));
+            assert!(board.index_empty(x));
         }
     }
 
     #[test]
     fn test_is_empty_non_empty_board() {
         let board: Board = Board { items: 1 };
-        assert!(!board.is_empty(15));
+        assert!(!board.index_empty(15));
         for x in 0..15 {
-            assert!(board.is_empty(x));
+            assert!(board.index_empty(x));
         }
     }
 
