@@ -5,6 +5,9 @@
 use std::fmt::Display;
 
 use crate::board::{Board, PIECE_SIZE};
+
+const BAR: &str = "-----------------\n";
+
 /// Representation for the board that is easier to print.
 /// Uses `Some(Piece)`s to store each piece, is easier to print but way slower to operate on.
 /// If there is no Piece on a location, we store a `None`.
@@ -48,6 +51,37 @@ impl PrintableBoard {
         }
         res
     }
+
+    /// Get the printable string for this board.
+    pub fn string(&self) -> String {
+        let mut res = String::new();
+        let items = self.items();
+        for i in 0..4 {
+            let mut first = String::new();
+            let mut second = String::new();
+            for j in 0..4 {
+                let slot = items[i * 4 + j];
+                match slot {
+                    Some(piece) => {
+                        first += if piece.hole { "H" } else { "N" };
+                        first += if piece.square { "S" } else { "R" };
+                        second += if piece.high { "H" } else { "L" };
+                        second += if piece.dark { "D" } else { "L" };
+                    }
+                    None => {
+                        first += "  ";
+                        second += "__"
+                    }
+                }
+                if j < 3 {
+                    first += " | ";
+                    second += " | ";
+                }
+            }
+            res += format!("{}\n{}\n{}", first, second, if i < 3 { BAR } else { "" }).as_str();
+        }
+        res
+    }
 }
 
 /// A Piece on the board that can be printed, but is not necessarily used in the Board structure (slow).
@@ -63,26 +97,10 @@ pub struct Piece {
 
 impl Display for Piece {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let size = if self.high {
-            "Large"
-        } else {
-            "Small"
-        };
-        let color = if self.dark {
-            "dark"
-        } else {
-            "light"
-        };
-        let form = if self.square {
-            "square"
-        } else {
-            "circle"
-        };
-        let hole = if self.hole {
-            "with"
-        } else {
-            "without"
-        };
+        let size = if self.high { "Large" } else { "Small" };
+        let color = if self.dark { "dark" } else { "light" };
+        let form = if self.square { "square" } else { "circle" };
+        let hole = if self.hole { "with" } else { "without" };
         write!(f, "{}, {} {} {} hole", size, color, form, hole)
     }
 }
@@ -162,6 +180,44 @@ mod tests {
                 high: false,
                 dark: false
             })
+        );
+    }
+
+    #[test]
+    fn test_printable_board_string() {
+        let pboard = PrintableBoard::from_board(Board::new());
+        assert!(pboard.string().chars().all(|c| !c.is_alphabetic()));
+        assert_eq!(
+            pboard
+                .string()
+                .chars()
+                .filter(|c| *c == '\n')
+                .collect::<Vec<char>>()
+                .len(),
+            11
+        );
+        let mut board = Board::new();
+        for i in 0..16 {
+            board.put_piece(i, i);
+        }
+        let pboard = PrintableBoard::from_board(board);
+        assert_eq!(
+            pboard
+                .string()
+                .chars()
+                .filter(|c| c.is_alphanumeric())
+                .collect::<Vec<char>>()
+                .len(),
+            64
+        );
+        assert_eq!(
+            pboard
+                .string()
+                .chars()
+                .filter(|c| *c == '\n')
+                .collect::<Vec<char>>()
+                .len(),
+            11
         );
     }
 

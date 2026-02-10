@@ -2,7 +2,6 @@
 // Players that can play the Quarto game.
 // Uses the `Board` to determine the moves.
 
-use crate::printable::Piece;
 use crate::ui::Warning::{IncorrectIndex, IncorrectPiece};
 use crate::{board::Board, strategy::Strategy, ui::PlayerInterface};
 
@@ -51,11 +50,11 @@ impl<I: PlayerInterface> Player for HumanPlayer<I> {
         if valid_pieces.is_empty() {
             return None
         }
-        let mut piece = self.interface.prompt_for_piece(board);
+        self.interface.show_game_board(board);
+        let mut piece = self.interface.prompt_for_piece();
         while !board.valid_piece(piece) {
-            // TODO: fix this question
-            // self.interface.warn_player(IncorrectPiece(Piece::from_u8(piece)));
-            piece = self.interface.prompt_for_piece(board);
+            self.interface.warn_player(IncorrectPiece(piece));
+            piece = self.interface.prompt_for_piece();
         }
         Some(piece)
     }
@@ -67,17 +66,19 @@ impl<I: PlayerInterface> Player for HumanPlayer<I> {
         if empty_spaces.is_empty() {
             return None
         }
-        let mut get_move = self.interface.prompt_for_move(board, piece);
+        self.interface.show_game_board(board);
+        let mut get_move = self.interface.prompt_for_move(piece);
         while !board.empty_index(get_move) {
             self.interface.warn_player(IncorrectIndex(get_move));
-            get_move = self.interface.prompt_for_move(board, piece);
+            get_move = self.interface.prompt_for_move(piece);
         }
-        Some(self.interface.prompt_for_move(board, piece))
+        Some(self.interface.prompt_for_move(piece))
     }
 
     /// Ask the user via the interface if they wish to call Quarto.
     fn quarto(&self, board: &Board) -> bool {
-        self.interface.ask_quarto(board)
+        self.interface.show_game_board(board);
+        self.interface.ask_quarto()
     }
 }
 
