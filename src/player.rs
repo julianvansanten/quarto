@@ -72,7 +72,7 @@ impl<I: PlayerInterface> Player for HumanPlayer<I> {
             self.interface.warn_player(IncorrectIndex(get_move));
             get_move = self.interface.prompt_for_move(piece);
         }
-        Some(self.interface.prompt_for_move(piece))
+        Some(get_move)
     }
 
     /// Ask the user via the interface if they wish to call Quarto.

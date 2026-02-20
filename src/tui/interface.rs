@@ -1,4 +1,4 @@
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Write};
 
 use crate::{
     board::Board,
@@ -17,7 +17,7 @@ impl TextualInterface {
         loop {
             match handle.read_line(&mut input).ok() {
                 Some(_) => match input.trim().parse::<u8>().ok() {
-                    Some(num) => return num - 1,
+                    Some(num) => return num,
                     None => println!("\nThat is not a number, please try again."),
                 },
                 None => println!("\nThat didn't work, please try again."),
@@ -30,10 +30,14 @@ impl PlayerInterface for TextualInterface {
     /// Ask the user via stdin for the number of the piece.
     fn prompt_for_piece(&self) -> u8 {
         print!("Enter a piece [1-16]: ");
+        match io::stdout().flush() {
+            Ok(_) => (),
+            Err(_) => (),
+        }
         loop {
             let res = self.ask_for_number();
             if res >= 1 && res <= 16 {
-                return res;
+                return res - 1;
             }
             println!("{} is not a valid piece, please try again.", res)
         }
@@ -42,10 +46,14 @@ impl PlayerInterface for TextualInterface {
     /// Ask the user via stdin for the move for a given piece.
     fn prompt_for_move(&self, piece: u8) -> u8 {
         print!("Enter a place on the board to put piece {} [1-16]: ", piece);
+        match io::stdout().flush() {
+            Ok(_) => (),
+            Err(_) => (),
+        }
         loop {
             let res = self.ask_for_number();
             if res >= 1 && res <= 16 {
-                return res;
+                return res - 1;
             }
             println!(
                 "{} is not a valid place on the board, please try again.",
@@ -57,6 +65,10 @@ impl PlayerInterface for TextualInterface {
     /// Ask via stdin if the user wants to call Quarto or not.
     fn ask_quarto(&self) -> bool {
         print!("Call Quarto? [Y/N] ");
+        match io::stdout().flush() {
+            Ok(_) => (),
+            Err(_) => (),
+        }
         let stdin = io::stdin();
         let mut handle = stdin.lock();
         let mut input = String::new();

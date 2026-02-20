@@ -63,10 +63,10 @@ impl PrintableBoard {
                 let slot = items[i * 4 + j];
                 match slot {
                     Some(piece) => {
-                        first += if piece.hole { "H" } else { "N" };
-                        first += if piece.square { "S" } else { "R" };
-                        second += if piece.high { "H" } else { "L" };
-                        second += if piece.dark { "D" } else { "L" };
+                        first += if piece.hole { "H" } else { "n" };
+                        first += if piece.square { "S" } else { "r" };
+                        second += if piece.high { "H" } else { "l" };
+                        second += if piece.dark { "D" } else { "l" };
                     }
                     None => {
                         first += "  ";

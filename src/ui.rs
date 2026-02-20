@@ -1,8 +1,5 @@
-use std::io::{self, BufRead};
-
 use crate::{
     board::Board,
-    printable::{Piece, PrintableBoard},
 };
 
 pub enum Warning {

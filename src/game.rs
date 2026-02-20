@@ -37,7 +37,6 @@ impl QuartoGame {
     /// Return the winner, `Draw` if it is a draw, and `Error` if the game ended pre-emptively due to an error.
     pub fn play_without_call(&mut self) -> GameResult {
         while !self.board.game_over() {
-            // TODO: harden the game loop in case the move is incorrect.
             let piece: u8 = match self.players[self.current].get_piece(&self.board) {
                 Some(p) => p,
                 None => return GameResult::Error,
@@ -54,12 +53,12 @@ impl QuartoGame {
         }
         GameResult::Draw
     }
-    
+
     /// Get the internal representation of the Board.
     pub fn board(&self) -> Board {
         self.board
     }
-    
+
     /// Reset the game, keeping the same players.
     pub fn reset(&mut self) {
         self.board = Board::new();
@@ -69,8 +68,8 @@ impl QuartoGame {
 
 #[cfg(test)]
 mod tests {
-    use crate::player::{ComputerPlayer};
-    use crate::strategy::{DumbStrategy, DeterministicStrategy};
+    use crate::player::ComputerPlayer;
+    use crate::strategy::{DeterministicStrategy, DumbStrategy};
 
     use super::*;
 
@@ -80,7 +79,7 @@ mod tests {
         let player2 = ComputerPlayer::new(DumbStrategy);
         let game = QuartoGame::new(player1, player2);
         assert!(game.board.is_empty());
-        assert_eq!(game.current, 0)
+        assert_eq!(game.current, 0);
     }
 
     #[test]
@@ -100,7 +99,7 @@ mod tests {
         let res = game.play_without_call();
         assert_ne!(res, GameResult::Error);
     }
-    
+
     #[test]
     fn test_reset_game() {
         let player1 = ComputerPlayer::new(DeterministicStrategy);

@@ -80,15 +80,15 @@ impl Strategy for NaiveStrategy {
 }
 
 impl Strategy for SmartStrategy {
-    fn get_piece(&self, board: &Board) -> Option<u8> {
+    fn get_piece(&self, _: &Board) -> Option<u8> {
         todo!("SmartStrategy not yet implemented!")
     }
 
-    fn get_move(&self, board: &Board, piece: u8) -> Option<u8> {
+    fn get_move(&self, _: &Board, _: u8) -> Option<u8> {
         todo!("SmartStrategy not yet implemented!")
     }
 
-    fn quarto(&self, board: &Board) -> bool {
+    fn quarto(&self, _: &Board) -> bool {
         todo!("SmartStrategy not yet implemented!")
     }
 }
