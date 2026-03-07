@@ -14,7 +14,6 @@ pub trait Strategy {
     fn quarto(&self, board: &Board) -> bool;
 }
 
-
 pub struct DumbStrategy;
 pub struct NaiveStrategy;
 pub struct SmartStrategy;
@@ -79,17 +78,56 @@ impl Strategy for NaiveStrategy {
     }
 }
 
+/// Somewhat smart strategy, picks pieces that prevent winning and makes a winning move when possible.
 impl Strategy for SmartStrategy {
-    fn get_piece(&self, _: &Board) -> Option<u8> {
-        todo!("SmartStrategy not yet implemented!")
+    
+    /// See if any piece is available that does not allow a winning move, then pick that one.
+    fn get_piece(&self, board: &Board) -> Option<u8> {
+        let valid_pieces = board.valid_pieces();
+        if valid_pieces.is_empty() {
+            return None;
+        }
+        for piece in &valid_pieces {
+            let mut winnable = false;
+            let empty_spaces = board.empty_spaces();
+            for space in &empty_spaces {
+                let mut board_copy = board.clone();
+                if !board_copy.put_piece(*piece, *space) {
+                    continue
+                }
+                if board_copy.has_winner() {
+                    winnable = true;
+                    break;
+                }
+            }
+            if !winnable {
+                return Some(*piece)
+            }
+        }
+        Some(valid_pieces[0])
     }
 
-    fn get_move(&self, _: &Board, _: u8) -> Option<u8> {
-        todo!("SmartStrategy not yet implemented!")
+    /// Check if any move allows the player to immediately win.
+    fn get_move(&self, board: &Board, piece: u8) -> Option<u8> {
+        let empty_spaces = board.empty_spaces();
+        if empty_spaces.is_empty() {
+            return None;
+        }
+        for space in &empty_spaces {
+            let mut board_copy = board.clone();
+            if !board_copy.put_piece(piece, *space) {
+                continue
+            }
+            if board_copy.has_winner() {
+                return Some(*space)
+            }
+        }
+        Some(empty_spaces[0])
     }
 
-    fn quarto(&self, _: &Board) -> bool {
-        todo!("SmartStrategy not yet implemented!")
+    /// If the board has a winner, call Quarto immediately.
+    fn quarto(&self, board: &Board) -> bool {
+        board.has_winner()
     }
 }
 
@@ -118,3 +156,5 @@ impl Strategy for DeterministicStrategy {
         board.has_winner()
     }
 }
+
+// Strategy tests live in src/player.rs

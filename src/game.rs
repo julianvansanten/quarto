@@ -1,5 +1,6 @@
 use crate::{board::Board, player::Player};
 
+/// A QuartoGame has two players, an index for the current player, and the board.
 pub struct QuartoGame {
     players: [Box<dyn Player>; 2],
     current: usize,
@@ -7,9 +8,11 @@ pub struct QuartoGame {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+/// A result of a game of Quarto.
+/// The game can result in a draw, a win for a given player number, or a game error occurring when a given player was playing.
 pub enum GameResult {
-    Error,
     Draw,
+    Error(usize),
     Win(usize),
 }
 
@@ -39,12 +42,12 @@ impl QuartoGame {
         while !self.board.game_over() {
             let piece: u8 = match self.players[self.current].get_piece(&self.board) {
                 Some(p) => p,
-                None => return GameResult::Error,
+                None => return GameResult::Error(self.current),
             };
             self.next_player();
             let player_move = match self.players[self.current].get_move(&self.board, piece) {
                 Some(m) => m,
-                None => return GameResult::Error,
+                None => return GameResult::Error(self.current),
             };
             self.board.put_piece(piece, player_move);
         }
@@ -88,7 +91,8 @@ mod tests {
         let player2 = ComputerPlayer::new(DumbStrategy);
         let mut game = QuartoGame::new(player1, player2);
         let res = game.play_without_call();
-        assert_ne!(res, GameResult::Error);
+        assert_ne!(res, GameResult::Error(0));
+        assert_ne!(res, GameResult::Error(1));
     }
 
     #[test]
@@ -97,7 +101,8 @@ mod tests {
         let player2 = ComputerPlayer::new(DeterministicStrategy);
         let mut game = QuartoGame::new(player1, player2);
         let res = game.play_without_call();
-        assert_ne!(res, GameResult::Error);
+        assert_ne!(res, GameResult::Error(0));
+        assert_ne!(res, GameResult::Error(1));
     }
 
     #[test]

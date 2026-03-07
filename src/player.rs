@@ -27,6 +27,9 @@ pub struct ComputerPlayer<T: Strategy> {
     strategy: T,
 }
 
+/// A NetworkPlayer serves as an adapter for the player on a network client, not playing on this instance.
+pub struct NetworkPlayer;
+
 impl<I: PlayerInterface> HumanPlayer<I> {
     /// Create a new HumanPlayer with a given interface.
     pub fn new(interface: I) -> Self {
@@ -100,7 +103,7 @@ impl<T: Strategy> Player for ComputerPlayer<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::strategy::{DumbStrategy, NaiveStrategy};
+    use crate::{printable::Piece, strategy::{DumbStrategy, NaiveStrategy, SmartStrategy}};
 
     use super::*;
     use std::panic;
@@ -116,7 +119,7 @@ mod tests {
         };
         match player.get_move(&board, 0) {
             Some(n) => panic!(
-                "Strategy came back with number {}, while there is no valid space!",
+                "DumbStrategy came back with number {}, while there is no valid space!",
                 n
             ),
             None => (),
@@ -134,7 +137,7 @@ mod tests {
         };
         match player.get_piece(&board) {
             Some(n) => panic!(
-                "Strategy came back with number {}, while there is no valid space!",
+                "DumbStrategy came back with number {}, while there is no valid space!",
                 n
             ),
             None => (),
@@ -152,7 +155,7 @@ mod tests {
         };
         match player.get_move(&board, 0) {
             Some(n) => panic!(
-                "Strategy came back with number {}, while there is no valid space!",
+                "NaiveStrategy came back with number {}, while there is no valid space!",
                 n
             ),
             None => (),
@@ -170,7 +173,43 @@ mod tests {
         };
         match player.get_piece(&board) {
             Some(n) => panic!(
-                "Strategy came back with number {}, while there is no valid space!",
+                "NaiveStrategy came back with number {}, while there is no valid space!",
+                n
+            ),
+            None => (),
+        }
+    }
+    
+    #[test]
+    fn test_get_move_from_smart_full_board() {
+        let mut board: Board = Board::new();
+        for i in 0..16 {
+            board.put_piece(i, i);
+        }
+        let player = ComputerPlayer {
+            strategy: SmartStrategy,
+        };
+        match player.get_move(&board, 0) {
+            Some(n) => panic!(
+                "SmartStrategy came back with number {}, while there is no valid space!",
+                n
+            ),
+            None => (),
+        }
+    }
+
+    #[test]
+    fn test_get_piece_from_smart_full_board() {
+        let mut board: Board = Board::new();
+        for i in 0..16 {
+            board.put_piece(i, i);
+        }
+        let player = ComputerPlayer {
+            strategy: SmartStrategy,
+        };
+        match player.get_piece(&board) {
+            Some(n) => panic!(
+                "SmartStrategy came back with number {}, while there is no valid space!",
                 n
             ),
             None => (),
@@ -188,7 +227,7 @@ mod tests {
         };
         match player.get_move(&board, 0) {
             Some(n) => assert_eq!(n, 15),
-            None => panic!("Strategy gave no move, but the board still has an empty space!"),
+            None => panic!("DumbStrategy gave no move, but the board still has an empty space!"),
         }
     }
 
@@ -203,7 +242,7 @@ mod tests {
         };
         match player.get_piece(&board) {
             Some(n) => assert_eq!(n, 15),
-            None => panic!("Strategy gave no piece, but the board still has an empty space!"),
+            None => panic!("DumbStrategy gave no piece, but the board still has an empty space!"),
         }
     }
 
@@ -218,7 +257,7 @@ mod tests {
         };
         match player.get_move(&board, 0) {
             Some(n) => assert_eq!(n, 15),
-            None => panic!("Strategy gave no move, but the board still has an empty space!"),
+            None => panic!("NaiveStrategy gave no move, but the board still has an empty space!"),
         }
     }
 
@@ -233,7 +272,37 @@ mod tests {
         };
         match player.get_piece(&board) {
             Some(n) => assert_eq!(n, 15),
-            None => panic!("Strategy gave no piece, but the board still has an empty space!"),
+            None => panic!("NaiveStrategy gave no piece, but the board still has an empty space!"),
+        }
+    }
+    
+    #[test]
+    fn test_get_move_from_smart_nearly_full_board() {
+        let mut board: Board = Board::new();
+        for i in 0..15 {
+            board.put_piece(i, i);
+        }
+        let player = ComputerPlayer {
+            strategy: SmartStrategy,
+        };
+        match player.get_move(&board, 0) {
+            Some(n) => assert_eq!(n, 15),
+            None => panic!("SmartStrategy gave no move, but the board still has an empty space!"),
+        }
+    }
+
+    #[test]
+    fn test_get_piece_from_smart_nearly_full_board() {
+        let mut board: Board = Board::new();
+        for i in 0..15 {
+            board.put_piece(i, i);
+        }
+        let player = ComputerPlayer {
+            strategy: SmartStrategy,
+        };
+        match player.get_piece(&board) {
+            Some(n) => assert_eq!(n, 15),
+            None => panic!("SmartStrategy gave no piece, but the board still has an empty space!"),
         }
     }
 
@@ -282,6 +351,69 @@ mod tests {
         match player.get_piece(&board) {
             Some(m) => assert!(m < 16),
             None => panic!("Strategy gave no move, but the board still has an empty space!"),
+        }
+    }
+    
+    #[test]
+    fn test_get_move_from_smart_empty_board() {
+        let board: Board = Board::new();
+        let player = ComputerPlayer {
+            strategy: SmartStrategy,
+        };
+        match player.get_move(&board, 0) {
+            Some(m) => assert!(m < 16),
+            None => panic!("SmartStrategy gave no move, but the board still has an empty space!"),
+        }
+    }
+
+    #[test]
+    fn test_get_piece_from_smart_empty_board() {
+        let board: Board = Board::new();
+        let player = ComputerPlayer {
+            strategy: SmartStrategy,
+        };
+        match player.get_piece(&board) {
+            Some(m) => assert!(m < 16),
+            None => panic!("SmartStrategy gave no move, but the board still has an empty space!"),
+        }
+    }
+    
+    #[test]
+    fn test_get_optimal_move_from_smart_strategy() {
+        let mut board: Board = Board::new();
+        let player = ComputerPlayer {
+            strategy: SmartStrategy
+        };
+        let piece: Piece = Piece {
+            hole: true,
+            square: false,
+            high: false,
+            dark: false,
+        };
+        // Build a row of three pieces with a hole.
+        for i in 0..3 {
+            let piece = i + piece.to_number();
+            assert!(board.put_piece(piece, i + 12));
+        }
+        // Check that the strategy puts the fourth piece (which also has a hole) in the same place.
+        assert_eq!(player.get_move(&board, piece.to_number() + 4), Some(15));
+    }
+    
+    #[test]
+    fn test_get_nonwinning_piece_from_smart_strategy() {
+        let mut board: Board = Board::new();
+        let player = ComputerPlayer {
+            strategy: SmartStrategy
+        };
+        // Fill the first row with dark pieces.
+        for i in 0..3 {
+            let piece = (i << 1) + 1;
+            assert!(board.put_piece(piece, i));
+        }
+        // Make sure the SmartStrategy does not pick a dark piece.
+        match player.get_piece(&board) {
+            Some(chosen_piece) => assert_eq!(chosen_piece & 1, 0),
+            None => panic!("The SmartStrategy did not return a piece."),
         }
     }
 }

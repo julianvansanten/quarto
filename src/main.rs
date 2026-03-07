@@ -22,7 +22,7 @@ fn main() {
     let player2 = ComputerPlayer::new(NaiveStrategy);
     let mut game = QuartoGame::new(player1, player2);
     match game.play_without_call() {
-        game::GameResult::Error => panic!("The game panicked!"),
+        game::GameResult::Error(p) => panic!("The game panicked when player {} was supposed to play!", p),
         game::GameResult::Draw => println!("The game ended in a draw!"),
         game::GameResult::Win(p) => println!("Player {} has won this game!", p + 1),
     }
