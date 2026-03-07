@@ -2,7 +2,7 @@
 // An easy to debug board with a list of pieces.
 // This implementation uses a lot of memory (reads/writes), so there is only a way to go from this board to the bitboard.
 
-use std::fmt::Display;
+use std::fmt::{Display};
 
 use crate::board::{Board, PIECE_SIZE};
 
@@ -101,7 +101,7 @@ impl Display for Piece {
         let color = if self.dark { "dark" } else { "light" };
         let form = if self.square { "square" } else { "circle" };
         let hole = if self.hole { "with" } else { "without" };
-        write!(f, "{}, {} {} {} hole", size, color, form, hole)
+        write!(f, "{}, {} {} {} hole ({})", size, color, form, hole, self.to_number())
     }
 }
 
@@ -186,7 +186,8 @@ mod tests {
     #[test]
     fn test_printable_board_string() {
         let pboard = PrintableBoard::from_board(Board::new());
-        assert!(pboard.string().chars().all(|c| !c.is_alphabetic()));
+        // Check that there are no alphanumeric characters
+        assert!(pboard.string().chars().all(|c| !c.is_alphanumeric()));
         assert_eq!(
             pboard
                 .string()

@@ -1,3 +1,7 @@
+// Author: @julianvansanten
+// The main game logic for Quarto.
+// Orchestrates `Players` to move on the `Board`.
+
 use crate::{board::Board, player::Player};
 
 /// A QuartoGame has two players, an index for the current player, and the board.
