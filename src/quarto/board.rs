@@ -1,7 +1,7 @@
 // Author: @julianvansanten
 // A bitboard to store the Quarto board.
 
-use crate::printable::PrintableBoard;
+use crate::quarto::printable::PrintableBoard;
 
 /// The bit size of a single piece.
 pub const PIECE_SIZE: u8 = 8;
@@ -239,7 +239,7 @@ impl Board {
 mod tests {
     use std::panic;
 
-    use crate::printable::Piece;
+    use crate::quarto::printable::Piece;
 
     use super::*;
 

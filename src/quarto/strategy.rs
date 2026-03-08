@@ -1,4 +1,4 @@
-use crate::board::Board;
+use crate::quarto::board::Board;
 
 /// A `Strategy` determines how the `ComputerPlayer` determines thw piece for the opponents, and its own moves.
 /// It also allows a different implementation for calling Quarto.

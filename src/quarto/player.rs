@@ -3,7 +3,8 @@
 // Uses the `Board` to determine the moves.
 
 use crate::ui::Warning::{IncorrectIndex, IncorrectPiece};
-use crate::{board::Board, strategy::Strategy, ui::PlayerInterface};
+use crate::ui::PlayerInterface;
+use crate::quarto::{board::Board, strategy::Strategy};
 
 /// An abstraction of a `Player` that can play Quarto.
 /// The implementation should at least be able to get the piece for the opponent, the move to make, and the call for Quarto.
@@ -103,7 +104,7 @@ impl<T: Strategy> Player for ComputerPlayer<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{printable::Piece, strategy::{DumbStrategy, NaiveStrategy, SmartStrategy}};
+    use crate::quarto::{printable::Piece, strategy::{DumbStrategy, NaiveStrategy, SmartStrategy}};
 
     use super::*;
     use std::panic;

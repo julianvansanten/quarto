@@ -1,5 +1,5 @@
 use crate::{
-    board::Board,
+    quarto::board::Board,
 };
 
 pub enum Warning {

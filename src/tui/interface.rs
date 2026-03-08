@@ -1,8 +1,8 @@
 use std::io::{self, BufRead, Write};
 
 use crate::{
-    board::Board,
-    printable::{Piece, PrintableBoard},
+    quarto::board::Board,
+    quarto::printable::{Piece, PrintableBoard},
     ui::{PlayerInterface, Warning},
 };
 

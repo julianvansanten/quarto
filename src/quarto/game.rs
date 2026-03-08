@@ -2,7 +2,7 @@
 // The main game logic for Quarto.
 // Orchestrates `Players` to move on the `Board`.
 
-use crate::{board::Board, player::Player};
+use crate::quarto::{board::Board, player::Player};
 
 /// A QuartoGame has two players, an index for the current player, and the board.
 pub struct QuartoGame {
@@ -75,8 +75,8 @@ impl QuartoGame {
 
 #[cfg(test)]
 mod tests {
-    use crate::player::ComputerPlayer;
-    use crate::strategy::{DeterministicStrategy, DumbStrategy};
+    use crate::quarto::player::ComputerPlayer;
+    use crate::quarto::strategy::{DeterministicStrategy, DumbStrategy};
 
     use super::*;
 

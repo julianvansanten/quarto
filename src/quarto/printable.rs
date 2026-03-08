@@ -4,7 +4,7 @@
 
 use std::fmt::{Display};
 
-use crate::board::{Board, PIECE_SIZE};
+use crate::quarto::board::{Board, PIECE_SIZE};
 
 const BAR: &str = "-----------------\n";
 
