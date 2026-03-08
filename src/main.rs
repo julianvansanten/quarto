@@ -15,6 +15,7 @@ pub mod printable;
 pub mod strategy;
 pub mod tui;
 pub mod ui;
+pub mod net;
 
 fn main() {
     println!("Welcome to Quarto!");
