@@ -142,7 +142,7 @@ impl fmt::Display for ClientCommand {
 
 #[cfg(test)]
 mod tests {
-    use crate::net::commands::{ClientCommand, DisconnectReason, Extension, ServerCommand};
+    use crate::net::protocol::{ClientCommand, DisconnectReason, Extension, ServerCommand};
 
     #[test]
     fn test_disconnect_reason_string() {
